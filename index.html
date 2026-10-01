@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Тръжни инструменти — Македония Снаб</title>
+<style>
+  :root {
+    --green: #1a7f37; --green-bg: #d9f2e3;
+    --red: #c21e1e; --red-bg: #fbdede;
+    --yellow: #9a6b00; --yellow-bg: #fff2cc;
+    --grey: #555; --grey-bg: #e9e9ec;
+    --purple: #6b3fa0; --purple-bg: #ece2f7;
+    --orange: #b35c00; --orange-bg: #ffe8cc;
+    --border: #d6d6dc;
+    --bg: #f7f7f9;
+    --panel: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6b6b73;
+    --accent: #2d5ea8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0 16px 60px;
+  }
+  header {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 0 8px;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .tab-btn {
+    padding: 10px 18px;
+    border: none;
+    background: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-top: 20px;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  input[type="file"] {
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    max-width: 100%;
+  }
+  button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.92rem;
+    cursor: pointer;
+  }
+  button:disabled {
+    background: #b9c6dc;
+    border-color: #b9c6dc;
+    cursor: not-allowed;
+  }
+  button.secondary {
+    background: #fff;
+    color: var(--accent);
+  }
+  button.secondary:disabled { color: var(--muted); border-color: var(--border); background: #fff; }
+  .progress {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: none;
+  }
+  .progress.show { display: block; }
+  .spinner {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 7px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--red-bg);
+    color: var(--red);
+    border-radius: 7px;
+    font-size: 0.9rem;
+    display: none;
+  }
+  .error-box.show { display: block; }
+  .warn-box {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    border-radius: 7px;
+    font-size: 0.86rem;
+    display: none;
+  }
+  .warn-box.show { display: block; }
+  .warn-box ul { margin: 6px 0 0; padding-left: 20px; }
+  .warn-box .close-warn {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--yellow);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .info-line { font-size: 0.86rem; color: var(--muted); margin-top: 8px; }
+  .results-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 0.88rem; }
+  .filters label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead th {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr.row-clickable { cursor: pointer; }
+  tbody tr.row-clickable:hover { background: #f1f4fa; }
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge.ok, .badge.pass { background: var(--green-bg); color: var(--green); }
+  .badge.fail { background: var(--red-bg); color: var(--red); }
+  .badge.review, .badge.no_history { background: var(--yellow-bg); color: var(--yellow); }
+  .badge.blank, .badge.no_match { background: var(--grey-bg); color: var(--grey); }
+  .badge.wrong_unit { background: var(--orange-bg); color: var(--orange); }
+  .badge.ambiguous { background: var(--purple-bg); color: var(--purple); }
+  .detail-row td {
+    background: #fafafb;
+    padding: 14px 16px;
+  }
+  .detail-row { display: none; }
+  .detail-row.show { display: table-row; }
+  .check-item { padding: 8px 0; border-bottom: 1px dashed var(--border); }
+  .check-item:last-child { border-bottom: none; }
+  .check-item .ctop { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .check-name { font-weight: 600; font-size: 0.87rem; }
+  .check-result { font-size: 0.85rem; color: var(--muted); }
+  .wording-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .wording-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.83rem;
+  }
+  .wording-box .label { font-weight: 600; color: var(--muted); display: block; margin-bottom: 3px; font-size: 0.78rem; }
+  .variant-list { margin-top: 8px; }
+  .variant-item {
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; margin-bottom: 6px; font-size: 0.85rem;
+  }
+  .summary-strip {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  .summary-pill {
+    padding: 7px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+    background: #fff; border: 1px solid var(--border);
+  }
+  .hint { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  .totals-row td { font-weight: 700; border-top: 2px solid var(--border); background: #f5f6f8; }
+  @media (max-width: 700px) {
+    .wording-grid { grid-template-columns: 1fr; }
+    table, thead, tbody, tr { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Тръжни инструменти — Македония Снаб</h1>
+  <div class="subtitle">Проверка на съответствие и ценообразуване по тръжни документи</div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="compliance">Проверка на съответствие</button>
+  <button class="tab-btn" data-tab="pricing">Ценообразуване по тръжен файл</button>
+</div>
+
+<main>
+
+  <!-- ================= COMPLIANCE PANEL ================= -->
+  <section id="panel-compliance" class="panel active">
+    <div class="card">
+      <div class="upload-row">
+        <input type="file" id="c-file" accept=".docx,.csv" />
+        <button id="c-check-btn" disabled>Провери</button>
+        <button id="c-export-btn" class="secondary" style="display:none" disabled>Изтегли попълнен документ</button>
+      </div>
+      <div class="progress" id="c-progress"><span class="spinner"></span><span id="c-progress-text"></span></div>
+      <div class="error-box" id="c-error"></div>
+      <div class="warn-box" id="c-warn"></div>
+      <div class="hint" id="c-export-hint" style="display:none"></div>
+    </div>
+
+    <div class="card" id="c-results-card" style="display:none">
+      <div class="summary-strip" id="c-summary-strip"></div>
+      <div class="results-head">
+        <div class="filters">
+          <label><input type="checkbox" id="c-filter-flagged" /> Покажи само маркираните</label>
+        </div>
+        <div class="info-line" id="c-count-line"></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>№</th><th>Продукt</th><th>Мярка</th><th>Резултат</th>
+          </tr>
+        </thead>
+        <tbody id="c-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PRICING PANEL ================= -->
+  <section id="panel-pricing" class="panel">
+    <div class="card">
+      <div class="upload-row">
+        <input type="file" id="p-file" accept=".docx,.csv" />
+        <button id="p-check-btn" disabled>Изчисли цени</button>
+      </div>
+      <div class="progress" id="p-progress"><span class="spinner"></span><span id="p-progress-text"></span></div>
+      <div class="error-box" id="p-error"></div>
+      <div class="warn-box" id="p-warn"></div>
+    </div>
+
+    <div class="card" id="p-results-card" style="display:none">
+      <div class="summary-strip" id="p-summary-strip"></div>
+      <div class="results-head">
+        <div class="filters" id="p-filters">
+          <label><input type="checkbox" id="p-filter-flagged" /> Покажи само проблемните</label>
+        </div>
+        <div class="info-line" id="p-count-line"></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>№</th><th>Продукт</th><th>Мярка</th><th>Кол-во</th><th>Ед. цена</th><th>Общо</th><th>Статус</th>
+          </tr>
+        </thead>
+        <tbody id="p-tbody"></tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td colspan="5" style="text-align:right">Обща сума (само намерени цени):</td>
+            <td id="p-grand-total"></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+
+// ---- config: public project URL + publishable (anon) key, same values the Lovable
+// frontend already ships in its own bundle -- safe for client-side use, RLS blocks
+// direct table access, Edge Functions are the only path to data. ----
+const SUPABASE_URL = "https://jyduohssjhronrrhqsip.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Z8arZuuAXX3v7cKITbptdA_2b-49k09";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ---------------- tabs ----------------
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function readFunctionError(error) {
+  try {
+    if (error && error.context && typeof error.context.json === "function") {
+      const body = await error.context.json();
+      if (body && body.error) return body.error;
+    }
+  } catch (e) { /* fall through */ }
+  return (error && error.message) || String(error);
+}
+
+// ======================================================================
+// ================= COMPLIANCE (Проверка на съответствие) =============
+// ======================================================================
+
+(function () {
+  const fileInput = document.getElementById("c-file");
+  const checkBtn = document.getElementById("c-check-btn");
+  const exportBtn = document.getElementById("c-export-btn");
+  const exportHint = document.getElementById("c-export-hint");
+  const progress = document.getElementById("c-progress");
+  const progressText = document.getElementById("c-progress-text");
+  const errorBox = document.getElementById("c-error");
+  const warnBox = document.getElementById("c-warn");
+  const resultsCard = document.getElementById("c-results-card");
+  const summaryStrip = document.getElementById("c-summary-strip");
+  const countLine = document.getElementById("c-count-line");
+  const filterFlagged = document.getElementById("c-filter-flagged");
+  const tbody = document.getElementById("c-tbody");
+
+  let selectedFile = null;
+  let lastResult = null; // { summary, detail, autofill }
+  let lastParsed = null;
+
+  fileInput.addEventListener("change", () => {
+    selectedFile = fileInput.files[0] || null;
+    checkBtn.disabled = !selectedFile;
+    hideError(); hideWarn();
+  });
+
+  function hideError() { errorBox.classList.remove("show"); errorBox.textContent = ""; }
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add("show"); }
+  function hideWarn() { warnBox.classList.remove("show"); warnBox.innerHTML = ""; }
+  function showWarnings(warnings) {
+    if (!warnings || warnings.length === 0) { hideWarn(); return; }
+    let html = '<button class="close-warn" id="c-warn-close">&times;</button>';
+    html += "<strong>Забелязани нередности при разчитането — прегледай преди да продължиш:</strong><ul>";
+    for (const w of warnings) html += `<li>Ред ${escapeHtml(w.row)}: ${escapeHtml(w.message)}</li>`;
+    html += "</ul>";
+    warnBox.innerHTML = html;
+    warnBox.classList.add("show");
+    document.getElementById("c-warn-close").addEventListener("click", hideWarn);
+  }
+
+  function setProgress(stage) {
+    if (!stage) { progress.classList.remove("show"); return; }
+    progressText.textContent = stage;
+    progress.classList.add("show");
+  }
+
+  function badgeForOverall(overall) {
+    if (overall === "PASS") return { cls: "pass", label: "✅" };
+    if (overall === "NO MATCH — BLANK") return { cls: "blank", label: "⬜" };
+    const failMatch = overall.match(/^FAIL \((\d+)\)/);
+    if (failMatch) return { cls: "fail", label: `❌ (${failMatch[1]})` };
+    const reviewMatch = overall.match(/^NEEDS REVIEW \((\d+)\)/);
+    if (reviewMatch) return { cls: "review", label: `❓ (${reviewMatch[1]})` };
+    return { cls: "blank", label: escapeHtml(overall) };
+  }
+
+  function renderSummaryStrip(summary) {
+    const counts = { PASS: 0, FAIL: 0, REVIEW: 0, BLANK: 0 };
+    for (const row of summary) {
+      if (row.overall_result === "PASS") counts.PASS++;
+      else if (row.overall_result === "NO MATCH — BLANK") counts.BLANK++;
+      else if (/^FAIL/.test(row.overall_result)) counts.FAIL++;
+      else if (/^NEEDS REVIEW/.test(row.overall_result)) counts.REVIEW++;
+    }
+    summaryStrip.innerHTML = `
+      <div class="summary-pill" style="color:var(--green)">✅ PASS: ${counts.PASS}</div>
+      <div class="summary-pill" style="color:var(--yellow)">❓ За преглед: ${counts.REVIEW}</div>
+      <div class="summary-pill" style="color:var(--red)">❌ FAIL: ${counts.FAIL}</div>
+      <div class="summary-pill" style="color:var(--grey)">⬜ Без намерен продукт: ${counts.BLANK}</div>
+    `;
+  }
+
+  function renderTable() {
+    if (!lastResult) return;
+    const { summary, detail } = lastResult;
+    const onlyFlagged = filterFlagged.checked;
+    tbody.innerHTML = "";
+    let shown = 0;
+    for (const row of summary) {
+      const isFlagged = row.overall_result !== "PASS";
+      if (onlyFlagged && !isFlagged) continue;
+      shown++;
+      const badge = badgeForOverall(row.overall_result);
+      const tr = document.createElement("tr");
+      tr.className = "row-clickable";
+      tr.innerHTML = `
+        <td>${escapeHtml(row.item_no)}</td>
+        <td>${escapeHtml(row.product_name)}</td>
+        <td>${escapeHtml(row.unit)}</td>
+        <td><span class="badge ${badge.cls}">${badge.label}</span></td>
+      `;
+      const detailTr = document.createElement("tr");
+      detailTr.className = "detail-row";
+      const checksForItem = detail.filter((d) => d.item_no === row.item_no);
+      let detailHtml = "";
+      for (const c of checksForItem) {
+        detailHtml += `<div class="check-item"><div class="ctop"><span class="check-name">${escapeHtml(c.check)}</span><span class="check-result">${escapeHtml(c.result)}</span></div>`;
+        if ((c.tender_wording && c.tender_wording.length) || (c.product_wording && c.product_wording.length)) {
+          detailHtml += `<div class="wording-grid">
+            <div class="wording-box"><span class="label">Изисквание на конкурса:</span>${escapeHtml(c.tender_wording)}</div>
+            <div class="wording-box"><span class="label">Текст на продукта:</span>${escapeHtml(c.product_wording)}</div>
+          </div>`;
+        }
+        detailHtml += "</div>";
+      }
+      if (!checksForItem.length) detailHtml = '<div class="check-item">Няма допълнителни данни.</div>';
+      detailTr.innerHTML = `<td colspan="4">${detailHtml}</td>`;
+
+      tr.addEventListener("click", () => detailTr.classList.toggle("show"));
+      tbody.appendChild(tr);
+      tbody.appendChild(detailTr);
+    }
+    countLine.textContent = `Показани: ${shown} от ${summary.length}`;
+  }
+
+  filterFlagged.addEventListener("change", renderTable);
+
+  checkBtn.addEventListener("click", async () => {
+    if (!selectedFile) return;
+    hideError(); hideWarn();
+    resultsCard.style.display = "none";
+    exportBtn.style.display = "none";
+    exportHint.style.display = "none";
+    checkBtn.disabled = true;
+    fileInput.disabled = true;
+    try {
+      setProgress("Разчитам файла...");
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const { data: parsed, error: parseError } = await sb.functions.invoke("parse-tender", { body: formData });
+      if (parseError) {
+        showError("Файлът не можа да се обработи — " + (await readFunctionError(parseError)) + ". Провери формата на файла или опитай отново.");
+        return;
+      }
+      lastParsed = parsed;
+      showWarnings(parsed.warnings);
+      if (!parsed.items || parsed.items.length === 0) {
+        showError("Не бяха открити артикули в файла.");
+        return;
+      }
+
+      setProgress("Проверявам съответствие...");
+      const { data: result, error: checkError } = await sb.functions.invoke("compliance-engine", { body: { items: parsed.items } });
+      if (checkError) {
+        showError("Файлът не можа да се обработи — " + (await readFunctionError(checkError)) + ". Провери формата на файла или опитай отново.");
+        return;
+      }
+      lastResult = result;
+      renderSummaryStrip(result.summary);
+      renderTable();
+      resultsCard.style.display = "block";
+
+      if (/\.docx$/i.test(selectedFile.name)) {
+        exportBtn.style.display = "inline-block";
+        exportBtn.disabled = false;
+        exportHint.style.display = "block";
+        exportHint.textContent = "Документът съдържа текста на намерените продукти във всички редове, включително артикулите, маркирани за преглед (❓). Артикулите без намерен продукт (⬜) остават с празна колона „Характеристики“. Прегледай ги преди подаване.";
+      } else {
+        exportBtn.style.display = "inline-block";
+        exportBtn.disabled = true;
+        exportHint.style.display = "block";
+        exportHint.textContent = "Попълнен документ може да се изтегли само когато е качен .docx файл (CSV няма шаблон за попълване).";
+      }
+    } catch (e) {
+      showError("Неочаквана грешка — " + (e && e.message ? e.message : String(e)));
+    } finally {
+      setProgress(null);
+      checkBtn.disabled = false;
+      fileInput.disabled = false;
+    }
+  });
+
+  exportBtn.addEventListener("click", async () => {
+    if (!selectedFile || !lastResult) return;
+    exportBtn.disabled = true;
+    const originalLabel = exportBtn.textContent;
+    exportBtn.textContent = "Подготвям документа...";
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("result", JSON.stringify({ summary: lastResult.summary, autofill: lastResult.autofill }));
+      const { data: blob, error } = await sb.functions.invoke("export-tender", { body: formData });
+      if (error) {
+        showError("Документът не можа да се подготви — " + (await readFunctionError(error)) + ". Опитай отново.");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = selectedFile.name.replace(/\.docx$/i, "") + " - ПОПЪЛНЕН.docx";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showError("Документът не можа да се подготви — " + (e && e.message ? e.message : String(e)) + ". Опитай отново.");
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = originalLabel;
+    }
+  });
+})();
+
+// ======================================================================
+// ================= PRICING (Ценообразуване по тръжен файл) ============
+// ======================================================================
+
+(function () {
+  const fileInput = document.getElementById("p-file");
+  const checkBtn = document.getElementById("p-check-btn");
+  const progress = document.getElementById("p-progress");
+  const progressText = document.getElementById("p-progress-text");
+  const errorBox = document.getElementById("p-error");
+  const warnBox = document.getElementById("p-warn");
+  const resultsCard = document.getElementById("p-results-card");
+  const summaryStrip = document.getElementById("p-summary-strip");
+  const countLine = document.getElementById("p-count-line");
+  const filterFlagged = document.getElementById("p-filter-flagged");
+  const tbody = document.getElementById("p-tbody");
+  const grandTotalCell = document.getElementById("p-grand-total");
+
+  let selectedFile = null;
+  let lastItems = null;
+  let unitByItemNo = new Map();
+
+  const STATUS_LABEL = {
+    ok: "Намерена",
+    no_history: "Няма история",
+    no_match: "Не е намерен",
+    wrong_unit: "Грешна мерна единица",
+    ambiguous: "Няколко възможни цени",
+  };
+  const STATUS_ICON = {
+    ok: "✅", no_history: "⬜", no_match: "❌", wrong_unit: "⚠️", ambiguous: "❔",
+  };
+
+  fileInput.addEventListener("change", () => {
+    selectedFile = fileInput.files[0] || null;
+    checkBtn.disabled = !selectedFile;
+    hideError(); hideWarn();
+  });
+
+  function hideError() { errorBox.classList.remove("show"); errorBox.textContent = ""; }
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add("show"); }
+  function hideWarn() { warnBox.classList.remove("show"); warnBox.innerHTML = ""; }
+  function showWarnings(warnings) {
+    if (!warnings || warnings.length === 0) { hideWarn(); return; }
+    let html = '<button class="close-warn" id="p-warn-close">&times;</button>';
+    html += "<strong>Забелязани нередности при разчитането — прегледай преди да продължиш:</strong><ul>";
+    for (const w of warnings) html += `<li>Ред ${escapeHtml(w.row)}: ${escapeHtml(w.message)}</li>`;
+    html += "</ul>";
+    warnBox.innerHTML = html;
+    warnBox.classList.add("show");
+    document.getElementById("p-warn-close").addEventListener("click", hideWarn);
+  }
+
+  function setProgress(stage) {
+    if (!stage) { progress.classList.remove("show"); return; }
+    progressText.textContent = stage;
+    progress.classList.add("show");
+  }
+
+  function fmtMoney(n) {
+    if (n === null || n === undefined) return "—";
+    return n.toFixed(2) + " лв";
+  }
+
+  function renderSummaryStrip(items) {
+    const counts = { ok: 0, no_history: 0, no_match: 0, wrong_unit: 0, ambiguous: 0 };
+    for (const it of items) counts[it.price_status] = (counts[it.price_status] || 0) + 1;
+    const colors = { ok: "var(--green)", no_history: "var(--grey)", no_match: "var(--red)", wrong_unit: "var(--orange)", ambiguous: "var(--purple)" };
+    let html = "";
+    for (const key of Object.keys(STATUS_LABEL)) {
+      html += `<div class="summary-pill" style="color:${colors[key]}">${STATUS_ICON[key]} ${STATUS_LABEL[key]}: ${counts[key] || 0}</div>`;
+    }
+    summaryStrip.innerHTML = html;
+  }
+
+  function renderTable() {
+    if (!lastItems) return;
+    const onlyFlagged = filterFlagged.checked;
+    tbody.innerHTML = "";
+    let shown = 0;
+    let grandTotal = 0;
+    for (const row of lastItems) {
+      const isFlagged = row.price_status !== "ok";
+      if (onlyFlagged && !isFlagged) continue;
+      shown++;
+      if (row.total_price !== null && row.total_price !== undefined) grandTotal += row.total_price;
+
+      const hasDetail = row.price_status === "ambiguous" || row.from_sibling || row.available_unit;
+      const tr = document.createElement("tr");
+      if (hasDetail) tr.className = "row-clickable";
+      tr.innerHTML = `
+        <td>${escapeHtml(row.item_no)}</td>
+        <td>${escapeHtml(row.product_name)}${row.matched_name && row.matched_name !== row.product_name ? `<br><span style="color:var(--muted);font-size:0.8em">разпозната като: ${escapeHtml(row.matched_name)}</span>` : ""}</td>
+        <td>${escapeHtml(unitByItemNo.get(String(row.item_no)) || "—")}</td>
+        <td>${row.quantity !== null && row.quantity !== undefined ? row.quantity : "—"}</td>
+        <td>${row.unit_price !== null && row.unit_price !== undefined ? fmtMoney(row.unit_price) : "—"}</td>
+        <td>${row.total_price !== null && row.total_price !== undefined ? fmtMoney(row.total_price) : "—"}</td>
+        <td><span class="badge ${row.price_status}">${STATUS_ICON[row.price_status]} ${STATUS_LABEL[row.price_status] || row.price_status}</span></td>
+      `;
+
+      const detailTr = document.createElement("tr");
+      detailTr.className = "detail-row";
+      let detailHtml = `<div class="check-item"><strong>Източник:</strong> ${escapeHtml(row.price_source || "—")}</div>`;
+      if (row.available_unit) detailHtml += `<div class="check-item"><strong>Налична мерна единица:</strong> ${escapeHtml(row.available_unit)}</div>`;
+      if (row.from_sibling) detailHtml += `<div class="check-item">Цената е взета от сроден запис (същото продуктово име, друг запис в базата), не точно от избрания артикул.</div>`;
+      if (row.ambiguous_variants && row.ambiguous_variants.length) {
+        detailHtml += '<div class="variant-list"><strong>Възможни варианти:</strong>';
+        for (const v of row.ambiguous_variants) {
+          detailHtml += `<div class="variant-item">${escapeHtml(v.name)} — ${escapeHtml(v.attribute)} — ${v.unit_price !== null ? fmtMoney(v.unit_price) : "няма цена"}</div>`;
+        }
+        detailHtml += "</div>";
+      }
+      detailTr.innerHTML = `<td colspan="7">${detailHtml}</td>`;
+
+      if (hasDetail) tr.addEventListener("click", () => detailTr.classList.toggle("show"));
+      tbody.appendChild(tr);
+      if (hasDetail) tbody.appendChild(detailTr);
+    }
+    countLine.textContent = `Показани: ${shown} от ${lastItems.length}`;
+    grandTotalCell.textContent = fmtMoney(grandTotal);
+  }
+
+  filterFlagged.addEventListener("change", renderTable);
+
+  checkBtn.addEventListener("click", async () => {
+    if (!selectedFile) return;
+    hideError(); hideWarn();
+    resultsCard.style.display = "none";
+    checkBtn.disabled = true;
+    fileInput.disabled = true;
+    try {
+      setProgress("Разчитам файла...");
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const { data: parsed, error: parseError } = await sb.functions.invoke("parse-tender", { body: formData });
+      if (parseError) {
+        showError("Файлът не можа да се обработи — " + (await readFunctionError(parseError)) + ". Провери формата на файла или опитай отново.");
+        return;
+      }
+      showWarnings(parsed.warnings);
+      if (!parsed.items || parsed.items.length === 0) {
+        showError("Не бяха открити артикули в файла.");
+        return;
+      }
+      unitByItemNo = new Map(parsed.items.map((it) => [String(it.item_no), it.unit]));
+
+      setProgress("Изчислявам цени...");
+      const { data: priced, error: priceError } = await sb.functions.invoke("price-engine", {
+        body: { items: parsed.items, document_format: parsed.document_format },
+      });
+      if (priceError) {
+        showError("Файлът не можа да се обработи — " + (await readFunctionError(priceError)) + ". Провери формата на файла или опитай отново.");
+        return;
+      }
+      lastItems = priced.items;
+      renderSummaryStrip(lastItems);
+      renderTable();
+      resultsCard.style.display = "block";
+    } catch (e) {
+      showError("Неочаквана грешка — " + (e && e.message ? e.message : String(e)));
+    } finally {
+      setProgress(null);
+      checkBtn.disabled = false;
+      fileInput.disabled = false;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
