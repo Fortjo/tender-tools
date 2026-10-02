@@ -285,10 +285,12 @@
       <div class="upload-row">
         <input type="file" id="p-file" accept=".docx,.csv" />
         <button id="p-check-btn" disabled>Изчисли цени</button>
+        <button id="p-export-btn" class="secondary" style="display:none" disabled>Изтегли попълнен документ</button>
       </div>
       <div class="progress" id="p-progress"><span class="spinner"></span><span id="p-progress-text"></span></div>
       <div class="error-box" id="p-error"></div>
       <div class="warn-box" id="p-warn"></div>
+      <div class="hint" id="p-export-hint" style="display:none"></div>
     </div>
 
     <div class="card" id="p-results-card" style="display:none">
@@ -566,6 +568,8 @@ async function readFunctionError(error) {
 (function () {
   const fileInput = document.getElementById("p-file");
   const checkBtn = document.getElementById("p-check-btn");
+  const exportBtn = document.getElementById("p-export-btn");
+  const exportHint = document.getElementById("p-export-hint");
   const progress = document.getElementById("p-progress");
   const progressText = document.getElementById("p-progress-text");
   const errorBox = document.getElementById("p-error");
@@ -579,6 +583,7 @@ async function readFunctionError(error) {
 
   let selectedFile = null;
   let lastItems = null;
+  let lastDocFormat = null;
   let unitByItemNo = new Map();
 
   const STATUS_LABEL = {
@@ -687,6 +692,8 @@ async function readFunctionError(error) {
     if (!selectedFile) return;
     hideError(); hideWarn();
     resultsCard.style.display = "none";
+    exportBtn.style.display = "none";
+    exportHint.style.display = "none";
     checkBtn.disabled = true;
     fileInput.disabled = true;
     try {
@@ -704,6 +711,7 @@ async function readFunctionError(error) {
         return;
       }
       unitByItemNo = new Map(parsed.items.map((it) => [String(it.item_no), it.unit]));
+      lastDocFormat = parsed.document_format;
 
       setProgress("Изчислявам цени...");
       const { data: priced, error: priceError } = await sb.functions.invoke("price-engine", {
@@ -717,12 +725,54 @@ async function readFunctionError(error) {
       renderSummaryStrip(lastItems);
       renderTable();
       resultsCard.style.display = "block";
+
+      const isDocx = /\.docx$/i.test(selectedFile.name);
+      exportBtn.style.display = "inline-block";
+      exportHint.style.display = "block";
+      if (isDocx && lastDocFormat === "price_kss") {
+        exportBtn.disabled = false;
+        exportHint.textContent = "Документът съдържа изчислените цени в последната колона за артикулите със статус „Намерена“. Останалите (Няма история / Не е намерен / Грешна мерна единица / Няколко възможни цени) остават с празна клетка — прегледай ги преди подаване.";
+      } else if (isDocx) {
+        exportBtn.disabled = true;
+        exportHint.textContent = "Попълване с цени е възможно само за документи тип „Образец 3, Ценово предложение с КСС“ — този файл е в друг формат.";
+      } else {
+        exportBtn.disabled = true;
+        exportHint.textContent = "Попълнен документ може да се изтегли само когато е качен .docx файл (CSV няма шаблон за попълване).";
+      }
     } catch (e) {
       showError("Неочаквана грешка — " + (e && e.message ? e.message : String(e)));
     } finally {
       setProgress(null);
       checkBtn.disabled = false;
       fileInput.disabled = false;
+    }
+  });
+
+  exportBtn.addEventListener("click", async () => {
+    if (!selectedFile || !lastItems) return;
+    exportBtn.disabled = true;
+    const originalLabel = exportBtn.textContent;
+    exportBtn.textContent = "Подготвям документа...";
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("result", JSON.stringify({ items: lastItems }));
+      const { data: blob, error } = await sb.functions.invoke("export-tender", { body: formData });
+      if (error) {
+        showError("Документът не можа да се подготви — " + (await readFunctionError(error)) + ". Опитай отново.");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = selectedFile.name.replace(/\.docx$/i, "") + " - ПОПЪЛНЕН.docx";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showError("Документът не можа да се подготви — " + (e && e.message ? e.message : String(e)) + ". Опитай отново.");
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = originalLabel;
     }
   });
 })();
