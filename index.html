@@ -250,7 +250,7 @@
   <section id="panel-compliance" class="panel active">
     <div class="card">
       <div class="upload-row">
-        <input type="file" id="c-file" accept=".docx,.csv" />
+        <input type="file" id="c-file" accept=".docx,.xls,.csv" />
         <button id="c-check-btn" disabled>Провери</button>
         <button id="c-export-btn" class="secondary" style="display:none" disabled>Изтегли попълнен документ</button>
       </div>
@@ -512,7 +512,7 @@ async function readFunctionError(error) {
       renderTable();
       resultsCard.style.display = "block";
 
-      if (/\.docx$/i.test(selectedFile.name)) {
+      if (/\.(docx|xls)$/i.test(selectedFile.name)) {
         exportBtn.style.display = "inline-block";
         exportBtn.disabled = false;
         exportHint.style.display = "block";
@@ -521,7 +521,7 @@ async function readFunctionError(error) {
         exportBtn.style.display = "inline-block";
         exportBtn.disabled = true;
         exportHint.style.display = "block";
-        exportHint.textContent = "Попълнен документ може да се изтегли само когато е качен .docx файл (CSV няма шаблон за попълване).";
+        exportHint.textContent = "Попълнен документ може да се изтегли само когато е качен .docx или .xls файл (CSV няма шаблон за попълване).";
       }
     } catch (e) {
       showError("Неочаквана грешка — " + (e && e.message ? e.message : String(e)));
@@ -549,7 +549,8 @@ async function readFunctionError(error) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = selectedFile.name.replace(/\.docx$/i, "") + " - ПОПЪЛНЕН.docx";
+      const isXlsIn = /\.xls$/i.test(selectedFile.name);
+      a.download = selectedFile.name.replace(/\.(docx|xls)$/i, "") + (isXlsIn ? " - ПОПЪЛНЕН.xlsx" : " - ПОПЪЛНЕН.docx");
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
