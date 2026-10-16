@@ -509,7 +509,7 @@ async function readFunctionError(error) {
     try {
       const { data, error } = await sb.functions.invoke("save-preference", { body: { product_name: productName, product_id: radio.value } });
       if (error) { statusEl.textContent = "Грешка — " + (await readFunctionError(error)); statusEl.style.color = "var(--red)"; return; }
-      statusEl.textContent = "Запазено ✓ — ще се прилага автоматично отсега нататък (натисни „Провери" пак, за да видиш резултата веднага).";
+      statusEl.textContent = 'Запазено ✓ — ще се прилага автоматично отсега нататък (натисни „Провери“ пак, за да видиш резултата веднага).';
       statusEl.style.color = "var(--green)";
     } catch (e2) {
       statusEl.textContent = "Грешка — " + (e2 && e2.message ? e2.message : String(e2));
