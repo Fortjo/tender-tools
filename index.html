@@ -466,6 +466,26 @@ async function readFunctionError(error) {
         detailHtml += "</div>";
       }
       if (!checksForItem.length) detailHtml = '<div class="check-item">Няма допълнителни данни.</div>';
+
+      // "remember my choice" picker (2026-10-16) -- only shown when compliance-engine found
+      // more than one candidate for this item's product name. Saved choices apply to every
+      // FUTURE tender that names the product the same way, not just this one.
+      if (Array.isArray(row.candidates) && row.candidates.length > 1) {
+        let pickerHtml = `<div class="variant-list"><strong>Няколко варианта в базата за „${escapeHtml(row.product_name)}" — избери кой да се ползва отсега нататък:</strong>`;
+        for (const cand of row.candidates) {
+          const checked = cand.id === row.matched_product_id ? "checked" : "";
+          pickerHtml += `<div class="variant-item">
+            <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer">
+              <input type="radio" name="cand-${escapeHtml(row.item_no)}-${escapeHtml(row.product_name)}" value="${escapeHtml(cand.id)}" ${checked} style="margin-top:3px">
+              <span><strong>${escapeHtml(cand.manufacturer || "(без производител)")}</strong><br>${escapeHtml(cand.snippet)}${cand.snippet.length >= 300 ? "…" : ""}</span>
+            </label>
+          </div>`;
+        }
+        pickerHtml += `<button class="secondary remember-btn" data-item-no="${escapeHtml(row.item_no)}" data-product-name="${escapeHtml(row.product_name)}" style="margin-top:6px">Запомни избора</button>
+          <span class="remember-status" style="margin-left:8px;font-size:0.85rem"></span></div>`;
+        detailHtml += pickerHtml;
+      }
+
       detailTr.innerHTML = `<td colspan="4">${detailHtml}</td>`;
 
       tr.addEventListener("click", () => detailTr.classList.toggle("show"));
@@ -474,6 +494,30 @@ async function readFunctionError(error) {
     }
     countLine.textContent = `Показани: ${shown} от ${summary.length}`;
   }
+
+  tbody.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".remember-btn");
+    if (!btn) return;
+    e.stopPropagation(); // don't toggle the detail row's open/closed state
+    const itemNo = btn.dataset.itemNo;
+    const productName = btn.dataset.productName;
+    const radio = tbody.querySelector(`input[name="cand-${CSS.escape(itemNo)}-${CSS.escape(productName)}"]:checked`);
+    const statusEl = btn.nextElementSibling;
+    if (!radio) { statusEl.textContent = "Избери вариант първо."; statusEl.style.color = "var(--red)"; return; }
+    btn.disabled = true;
+    statusEl.textContent = "Запазва се…"; statusEl.style.color = "var(--muted)";
+    try {
+      const { data, error } = await sb.functions.invoke("save-preference", { body: { product_name: productName, product_id: radio.value } });
+      if (error) { statusEl.textContent = "Грешка — " + (await readFunctionError(error)); statusEl.style.color = "var(--red)"; return; }
+      statusEl.textContent = "Запазено ✓ — ще се прилага автоматично отсега нататък (натисни „Провери" пак, за да видиш резултата веднага).";
+      statusEl.style.color = "var(--green)";
+    } catch (e2) {
+      statusEl.textContent = "Грешка — " + (e2 && e2.message ? e2.message : String(e2));
+      statusEl.style.color = "var(--red)";
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   filterFlagged.addEventListener("change", renderTable);
 
