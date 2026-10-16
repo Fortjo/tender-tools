@@ -472,6 +472,9 @@ async function readFunctionError(error) {
       // FUTURE tender that names the product the same way, not just this one.
       if (Array.isArray(row.candidates) && row.candidates.length > 1) {
         let pickerHtml = `<div class="variant-list"><strong>Няколко варианта в базата за „${escapeHtml(row.product_name)}" — избери кой да се ползва отсега нататък:</strong>`;
+        if (row.tender_requirement) {
+          pickerHtml += `<div class="wording-box" style="margin-top:6px;margin-bottom:10px"><span class="label">Изисквание на конкурса:</span>${escapeHtml(row.tender_requirement)}</div>`;
+        }
         for (const cand of row.candidates) {
           const checked = cand.id === row.matched_product_id ? "checked" : "";
           pickerHtml += `<div class="variant-item">
